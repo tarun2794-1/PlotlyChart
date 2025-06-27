@@ -79,7 +79,7 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
                 }
             }
 
-            currentPull = currentPull.map((v, i) => i === clickedIndex ? 0.02 : 0);
+            currentPull = currentPull.map((v, i) => i === clickedIndex ? 0.05 : 0);
             drawChart(currentPull);
 
             if (dotNetHelper)

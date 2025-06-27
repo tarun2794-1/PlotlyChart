@@ -82,7 +82,7 @@
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #DB0007;"></span>
-                    <span>>=10 MB</span>
+                    <span>>10 MB</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #57595B;"></span>
@@ -110,7 +110,7 @@
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #DB0007;"></span>
-                    <span>>=1 GB</span>
+                    <span>>1 GB</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #57595B;"></span>
@@ -283,9 +283,9 @@
         {
             filtered = label switch
             {
-                "0-7 GB" => allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > 0 && x.DBSizeGB <= 7),
-                "7-8 GB" => allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > 7 && x.DBSizeGB <= 8),
-                ">8 GB" => allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > 8),
+                "0-7 GB" => allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > 0 && x.DBSizeGB <= (7 * 1024)),
+                "7-8 GB" => allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > (7 * 1024) && x.DBSizeGB <= (8 * 1024)),
+                ">8 GB" => allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > (8 * 1024)),
                 "Missing Data" => allRows.Where(x => x.DatabaseType == "SDM" && (x.DBSizeGB <= 0 || x.DBSizeGB == null)),
                 _ => allRows
             };
@@ -307,7 +307,7 @@
             {
                 "0-7 MB" => allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && x.DBSizeGB > 0 && x.DBSizeGB <= 7),
                 "7-10 MB" => allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && x.DBSizeGB > 7 && x.DBSizeGB <= 10),
-                ">=10 MB" => allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && x.DBSizeGB >= 10),
+                ">10 MB" => allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && x.DBSizeGB > 10),
                 "Missing Data" => allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && (x.DBSizeGB <= 0 || x.DBSizeGB == null)),
                 _ => allRows
             };
@@ -316,9 +316,9 @@
         {
             filtered = label switch
             {
-                "0.0-0.5 GB" => allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > 0 && x.DBSizeGB <= 0.5),
-                "0.5-1 GB" => allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > 0.5 && x.DBSizeGB <= 1),
-                ">=1 GB" => allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB >= 1),
+                "0.0-0.5 GB" => allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > 0 && x.DBSizeGB <= (0.5 * 1024)),
+                "0.5-1 GB" => allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > (0.5 * 1024) && x.DBSizeGB <= (1 * 1024)),
+                ">1 GB" => allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > (1 * 1024)),
                 "Missing Data" => allRows.Where(x => x.DatabaseType == "SDM_Log_File" && (x.DBSizeGB <= 0 || x.DBSizeGB == null)),
                 _ => allRows
             };
@@ -337,7 +337,7 @@
     {
         if (allRows == null || !allRows.Any())
         {
-            allRows = await DataService.GetSDMTableDataAsync();
+            allRows = await DataService.GetSDMTableDataAsync();            
             allRowsCount = allRows.Count.ToString();
             SetPagedData();
             selectedTableTitle = "SDM"; // default value
@@ -348,48 +348,54 @@
     {
         if (firstRender)
         {
-            var data = await DataService.GetSDMPieChartDataAsync();
-            var dataSDM = allRows.Where(x => x.DatabaseType == "SDM");
-            var dataSDMCount = dataSDM.Count();
-            var dataSDM1 = dataSDM.Where(x => x.DBSizeGB > 0 && x.DBSizeGB <= 7).Count();
-            var dataSDM2 = dataSDM.Where(x => x.DBSizeGB > 7 && x.DBSizeGB <= 8).Count();
-            var dataSDM3 = dataSDM.Where(x => x.DBSizeGB > 8).Count();
-            var dataSDM4 = dataSDMCount - (dataSDM1 + dataSDM2 + dataSDM3);
+            var labelDict = await DataService.GetSDMPieChartDataAsync();
 
-            var dataSDMIFTR = allRows.Where(x => x.DatabaseType == "SDM_IF_TR");
-            var dataSDMIFTRCount = dataSDMIFTR.Count();
-            var dataSDMIFTR1 = dataSDMIFTR.Where(x => x.DBSizeGB > 0 && x.DBSizeGB <= 7).Count();
-            var dataSDMIFTR2 = dataSDMIFTR.Where(x => x.DBSizeGB > 7 && x.DBSizeGB <= 10).Count();
-            var dataSDMIFTR3 = dataSDMIFTR.Where(x => x.DBSizeGB > 10).Count();
-            var dataSDMIFTR4 = dataSDMIFTRCount - (dataSDMIFTR1 + dataSDMIFTR2 + dataSDMIFTR3);
-
-            var dataSDMIFPOS = allRows.Where(x => x.DatabaseType == "SDM_IF_POS");
-            var dataSDMIFPOSCount = dataSDMIFPOS.Count();
-            var dataSDMIFPOS1 = dataSDMIFPOS.Where(x => x.DBSizeGB > 0 && x.DBSizeGB <= 7).Count();
-            var dataSDMIFPOS2 = dataSDMIFPOS.Where(x => x.DBSizeGB > 7 && x.DBSizeGB <= 10).Count();
-            var dataSDMIFPOS3 = dataSDMIFPOS.Where(x => x.DBSizeGB >= 10).Count();
-            var dataSDMIFPOS4 = dataSDMIFPOSCount - (dataSDMIFPOS1 + dataSDMIFPOS2 + dataSDMIFPOS3);
-
-            var dataSDMLogFile = allRows.Where(x => x.DatabaseType == "SDM_Log_File");
-            var dataSDMLogFileCount = dataSDMLogFile.Count();
-            var dataSDMLogFile1 = dataSDMLogFile.Where(x => x.DBSizeGB > 0 && x.DBSizeGB <= 0.5).Count();
-            var dataSDMLogFile2 = dataSDMLogFile.Where(x => x.DBSizeGB > 0.5 && x.DBSizeGB <= 1).Count();
-            var dataSDMLogFile3 = dataSDMLogFile.Where(x => x.DBSizeGB >= 1).Count();
-            var dataSDMLogFile4 = dataSDMLogFileCount - (dataSDMLogFile1 + dataSDMLogFile2 + dataSDMLogFile3);                            
-    
-            var labels = data.Select(x => x.Label).ToArray();
-            var values1 = new[] { dataSDM1, dataSDM2, dataSDM3, dataSDM4 };
-            var values2 = new[] { dataSDMIFTR1, dataSDMIFTR2, dataSDMIFTR3, dataSDMIFTR4 };
-            var values3 = new[] { dataSDMIFPOS1, dataSDMIFPOS2, dataSDMIFPOS3, dataSDMIFPOS4 };
-            var values4 = new[] { dataSDMLogFile1, dataSDMLogFile2, dataSDMLogFile3, dataSDMLogFile4 };
             var colors = new[] { "#4CA71F", "#E8720A", "#DB0007", "#57595B" };
-
             var dotNetRef = DotNetObjectReference.Create(this);
 
-            await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart1", labels, values1, colors, dotNetRef);
-            await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart2", labels, values2, colors, dotNetRef);
-            await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart3", labels, values3, colors, dotNetRef);
-            await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart4", labels, values4, colors, dotNetRef);
+            // SDM
+            var dataSDM = allRows.Where(x => x.DatabaseType == "SDM");
+            var values1 = new[]
+            {
+                dataSDM.Count(x => x.DBSizeGB > 0 && x.DBSizeGB <= (7*1024)),
+                dataSDM.Count(x => x.DBSizeGB > (7*1024) && x.DBSizeGB <= (8*1024)),
+                dataSDM.Count(x => x.DBSizeGB > (8*1024)),
+                dataSDM.Count() - dataSDM.Count(x => x.DBSizeGB > 0)
+            };
+            await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart1", labelDict["SDM"].ToArray(), values1, colors, dotNetRef);
+
+            // SDM_IF_TR
+            var dataSDMIFTR = allRows.Where(x => x.DatabaseType == "SDM_IF_TR");
+            var values2 = new[]
+            {
+                dataSDMIFTR.Count(x => x.DBSizeGB > 0 && x.DBSizeGB <= 7),
+                dataSDMIFTR.Count(x => x.DBSizeGB > 7 && x.DBSizeGB <= 10),
+                dataSDMIFTR.Count(x => x.DBSizeGB > 10),
+                dataSDMIFTR.Count() - dataSDMIFTR.Count(x => x.DBSizeGB > 0)
+            };
+            await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart2", labelDict["SDM_IF_TR"].ToArray(), values2, colors, dotNetRef);
+
+            // SDM_IF_POS
+            var dataSDMIFPOS = allRows.Where(x => x.DatabaseType == "SDM_IF_POS");
+            var values3 = new[]
+            {
+                dataSDMIFPOS.Count(x => x.DBSizeGB > 0 && x.DBSizeGB <= 7),
+                dataSDMIFPOS.Count(x => x.DBSizeGB > 7 && x.DBSizeGB <= 10),
+                dataSDMIFPOS.Count(x => x.DBSizeGB > 10),
+                dataSDMIFPOS.Count() - dataSDMIFPOS.Count(x => x.DBSizeGB > 0)
+            };
+            await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart3", labelDict["SDM_IF_POS"].ToArray(), values3, colors, dotNetRef);
+
+            // SDM_Log_File
+            var dataSDMLogFile = allRows.Where(x => x.DatabaseType == "SDM_Log_File");
+            var values4 = new[]
+            {
+                dataSDMLogFile.Count(x => x.DBSizeGB > 0 && x.DBSizeGB <= (0.5*1024)),
+                dataSDMLogFile.Count(x => x.DBSizeGB > (0.5*1024) && x.DBSizeGB <= (1*1024)),
+                dataSDMLogFile.Count(x => x.DBSizeGB > (1*1024)),
+                dataSDMLogFile.Count() - dataSDMLogFile.Count(x => x.DBSizeGB > 0)
+            };
+            await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart4", labelDict["SDM_Log_File"].ToArray(), values4, colors, dotNetRef);
             StateHasChanged();
         }
     }
