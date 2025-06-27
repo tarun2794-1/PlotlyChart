@@ -210,7 +210,7 @@
     private string chartTitle2 = "SDM_IF_TR";
     private string chartTitle3 = "SDM_IF_POS";
     private string chartTitle4 = "SDM Log File Size";
-    private string selectedTableTitle = "SDM";
+    private string selectedTableTitle = "SDM"; 
     private string allRowsCount = "";
     private List<SDMTableRow> masterRows = new(); 
     private List<SDMTableRow> allRows = new List<SDMTableRow>();
@@ -231,7 +231,7 @@
     }
 
     private void GoToPage(int page)
-    {
+    { 
         Console.WriteLine($"Navigating to page {page}");
 
         if (page < 1) page = 1;
@@ -249,7 +249,7 @@
 
     [JSInvokable]
     public void ResetTableToSDM()
-    {
+    { 
         selectedTableTitle = "SDM";
         allRows = DataService.GetSDMTableDataAsync().Result;  
         allRowsCount = allRows.Count.ToString();
@@ -260,8 +260,7 @@
 
     [JSInvokable]
     public void OnSliceClick(string chartInfo)
-    {
-        // chartInfo = "sdmPieChart1|0-7 GB"
+    { 
         var parts = chartInfo.Split('|');
         if (parts.Length != 2) return;
 
@@ -272,10 +271,10 @@
 
         selectedTableTitle = chartId switch
         {
-            "sdmPieChart1" => "SDM",
-            "sdmPieChart2" => "SDM_IF_TR",
-            "sdmPieChart3" => "SDM_IF_POS",
-            "sdmPieChart4" => "SDM Log File Size",
+            "sdmPieChart1" => $"SDM ({label})",
+            "sdmPieChart2" => $"SDM_IF_TR ({label})",
+            "sdmPieChart3" => $"SDM_IF_POS ({label})",
+            "sdmPieChart4" => $"SDM Log File Size ({label})",
             _ => "SDM"
         };
 

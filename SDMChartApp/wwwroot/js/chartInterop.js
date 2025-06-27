@@ -27,9 +27,7 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
         displayModeBar: false
     };
 
-    let currentPull = new Array(values.length).fill(0);
-
-    function drawChart(pullArray) {
+    function drawChart() {
         const data = [{
             values: values,
             labels: labels,
@@ -43,47 +41,37 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
             insidetextorientation: "radial",
             textfont: {
                 size: 16,
-                family: "Arial"
-            },
-            pull: pullArray
+                family: "Arial",
+                color: "black"
+            }
         }];
 
         Plotly.react(elementId, data, layout, config);
     }
 
-    drawChart(currentPull);
+    drawChart();
 
     const chartDiv = document.getElementById(elementId);
     let sliceClicked = false;
 
-    if (chartDiv && !chartDiv.hasClickHandler)
-    {
+    if (chartDiv && !chartDiv.hasClickHandler) {
 
         // Register reset function globally
         window._plotPieRegistry[elementId] = () => {
-            currentPull = new Array(values.length).fill(0);
-            drawChart(currentPull);
+            drawChart();
         };
 
-        chartDiv.on('plotly_click', function (data)
-        {
-            const clickedIndex = data.points[0].pointNumber;
+        chartDiv.on('plotly_click', function (data) {
             sliceClicked = true;
 
             // Reset all other charts
-            for (let id in window._plotPieRegistry)
-            {
-                if (id !== elementId)
-                {
-                    window._plotPieRegistry[id](); // call reset
+            for (let id in window._plotPieRegistry) {
+                if (id !== elementId) {
+                    window._plotPieRegistry[id]();
                 }
             }
 
-            currentPull = currentPull.map((v, i) => i === clickedIndex ? 0.05 : 0);
-            drawChart(currentPull);
-
-            if (dotNetHelper)
-            {
+            if (dotNetHelper) {
                 const label = data.points[0].label;
                 dotNetHelper.invokeMethodAsync('OnSliceClick', elementId + "|" + label);
             }
@@ -91,8 +79,7 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
 
         chartDiv.addEventListener('click', function () {
             if (!sliceClicked) {
-                currentPull = new Array(values.length).fill(0);
-                drawChart(currentPull);
+                drawChart();
                 if (dotNetHelper) {
                     dotNetHelper.invokeMethodAsync('ResetTableToSDM');
                 }
@@ -103,8 +90,7 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
         document.addEventListener('click', function (event) {
             const clickedInside = chartDiv.contains(event.target);
             if (!clickedInside) {
-                currentPull = new Array(values.length).fill(0);
-                drawChart(currentPull);
+                drawChart();
                 if (dotNetHelper) {
                     dotNetHelper.invokeMethodAsync('ResetTableToSDM');
                 }
