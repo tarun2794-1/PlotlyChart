@@ -17,6 +17,8 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
     const layout = {
         showlegend: false,
         autosize: true,
+        paper_bgcolor: '#f7f7f7',
+        plot_bgcolor: '#f7f7f7',
         margin: { t: 40, b: 40, l: 60, r: 60 },
         annotations: [{
             font: { size: 16 },

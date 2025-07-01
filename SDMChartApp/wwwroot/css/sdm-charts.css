@@ -4,11 +4,11 @@
     gap: 20px;
     width: 100%;
     box-sizing: border-box;
-    padding: 20px;
+    padding: 20px; 
 }
 
 .chart-card {
-    background-color: #ffffff;
+    background-color: #f7f7f7;
     border-radius: 12px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     padding: 0;
@@ -71,7 +71,7 @@
 
 .table-section {
     grid-column: span 2;
-    background-color: #ffffff;
+    background-color: #f0f0f0;
     border-radius: 12px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     overflow: hidden;
@@ -81,9 +81,12 @@
 }
 
 .table-wrapper {
-    height: 350px;
-    overflow-y: auto;
+    height: 350px; 
     padding: 0 10px;
+    background-color: #f0f0f0;
+    position: relative;
+    overflow: auto;
+    box-shadow: 0px 6px 12px -4px rgba(0, 0, 0, 0.3); /* Bottom shadow */ 
 }
 
 .table-header {
@@ -102,10 +105,11 @@
     border-collapse: collapse;
     font-size: 14px;
     text-align: center;
+    background-color: #f0f0f0;
 }
 
-.data-table thead {
-        background-color: #f9f9f9;
+    .data-table thead {
+        background-color: #DEE2E9;
         position: sticky;
         top: 0;
         z-index: 1;
@@ -130,7 +134,10 @@
     margin-left: 10px;
 }
 
-.pagination-bar {
+.pagination-bar
+{
+    width: 100%;
+    background-color: #f0f0f0;
     display: flex;
     justify-content: right;
     align-items: right;
@@ -138,6 +145,8 @@
     margin: 12px 0;
     flex-wrap: wrap;
     font-size: 14px;
+    width: 100%;
+    background-color: #f0f0f0;
 }
 
 .pagination-info {
@@ -145,7 +154,7 @@
     color: #333;
     display: flex;
     align-items: center;
-    font-weight: bold;
+    font-weight: bold; 
 }
 
 .pagination-buttons {
