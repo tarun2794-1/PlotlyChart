@@ -1,4 +1,5 @@
-﻿@using SDMChartApp.Services
+﻿@page "/chart" 
+@using SDMChartApp.Services
 @using SDMChartApp.Models
 @using SDMChartApp
 @inject SDMService DataService
@@ -123,11 +124,11 @@
     <div class="table-section">
         <div class="table-header">
             <span>@selectedTableTitle</span>
-            <img src="images/excelicon.png" title="Export" class="icon-image" @onclick="() => OnExportClick(chartTitle1)" />
+            <img src="images/excelicon.png" title="Export" class="icon-image" @onclick="() => OnExportClick(selectedTableTitle)" />
         </div>
 
         <div class="table-wrapper">
-            <table class="data-table">
+            <table class="data-table" id="exportableTable">
                 <thead>
                     <tr>
                         <th @onclick="() => SortTable(nameof(SDMTableRow.Segment))">
@@ -255,9 +256,29 @@
         StateHasChanged();
     }
 
-    private void OnExportClick(string chartTitle)
+    private async void OnExportClick(string chartTitle)
     {
-        JSRuntime.InvokeVoidAsync("alert", $"Export clicked for: {chartTitle}");
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to export '{chartTitle}'?");
+        if (confirmed)
+        {
+            var exportData = filtered?.Select(row => new
+            {
+                row.Segment,
+                row.Market,
+                row.StoreId,
+                row.StoreName,
+                DBSize = row.DBSizeGB,
+                DBUsed = $"{row.DBUsedPercent}%",
+                DBAvailable = row.DBAvailableGB,
+                DBAvailablePercent = $"{row.DBAvailablePercent}%",
+                BackupDate = row.LastBackupOn.ToString("dd/MM/yyyy")
+            }).ToList();
+
+            var json = System.Text.Json.JsonSerializer.Serialize(exportData);
+            chartTitle = chartTitle + "__" + System.DateTime.Now.ToString();
+
+            await JSRuntime.InvokeVoidAsync("exportJsonToXlsx", json, $"{chartTitle}.xlsx");
+        }
     }
 
     [JSInvokable]

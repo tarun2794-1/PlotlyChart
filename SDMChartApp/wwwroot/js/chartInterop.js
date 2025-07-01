@@ -20,12 +20,18 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
     function drawChart(pullArray, clickedIndex = -1) {
         const customText = values.map((v, i) => {
             const percent = ((v / total) * 100).toFixed(1);
-            const content = `${v}<br>(${percent}%)`;
-            return i === clickedIndex ? `<b>${content}</b>` : content;
+            return `${v}<br>(${percent}%)`;
         });
 
+        const textColors = colors.map((color, i) =>
+            i === clickedIndex ? color : '#000'
+        );
+        const textFonts = values.map((_, i) =>
+            i === clickedIndex ? 'Arial Black, Arial Bold, sans-serif' : 'Arial'
+        );
+
         // Define slice outlines (glow effect)
-        const lineWidths = values.map((_, i) => i === clickedIndex ? 6 : 0);
+        const lineWidths = values.map((_, i) => i === clickedIndex ? 8 : 0);
         const lineColors = colors.map((color, i) =>
             i === clickedIndex ? hexToRgba(color, 0.5) : 'transparent'
         );
@@ -48,8 +54,9 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
             textposition: "outside",
             insidetextorientation: "radial",
             textfont: {
-                size: 16,
-                family: "Arial"
+                size: 14,
+                color: textColors,
+                family: textFonts
             },
             pull: pullArray
         }];
@@ -75,7 +82,13 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
         };
 
         // Render chart and add center overlay for reset
-        Plotly.react(elementId, data, layout, config).then(() => {
+        const chartDiv = document.getElementById(elementId);
+        if (!chartDiv) {
+            console.error("Chart container not found:", elementId);
+            return;
+        }
+
+        Plotly.react(chartDiv, data, layout, config).then(() => {
             addCenterClickOverlay(elementId);
         });
     }
@@ -108,7 +121,7 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
             }
 
             // Update pull array for selected slice
-            currentPull = currentPull.map((v, i) => i === clickedIndex ? 0.01 : 0);
+            currentPull = currentPull.map((v, i) => i === clickedIndex ? 0.05 : 0);
             clickedSliceIndex = clickedIndex;
             drawChart(currentPull, clickedSliceIndex);
 
