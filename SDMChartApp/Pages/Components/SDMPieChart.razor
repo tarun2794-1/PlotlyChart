@@ -2,7 +2,7 @@
 @using SDMChartApp.Models
 @using SDMChartApp
 @inject SDMService DataService
-@inject IJSRuntime JSRuntime
+@inject IJSRuntime JSRuntime 
 
 <div class="chart-layout">
 
@@ -143,13 +143,13 @@
                             Store Name @RenderSortIcon(nameof(SDMTableRow.StoreName))
                         </th>
                         <th @onclick="() => SortTable(nameof(SDMTableRow.DBSizeGB))">
-                            DB Size (GBs) @RenderSortIcon(nameof(SDMTableRow.DBSizeGB))
+                            DB Size (MBs) @RenderSortIcon(nameof(SDMTableRow.DBSizeGB))
                         </th>
                         <th @onclick="() => SortTable(nameof(SDMTableRow.DBUsedPercent))">
                             DB Used (%) @RenderSortIcon(nameof(SDMTableRow.DBUsedPercent))
                         </th>
                         <th @onclick="() => SortTable(nameof(SDMTableRow.DBAvailableGB))">
-                            DB Available (GBs) @RenderSortIcon(nameof(SDMTableRow.DBAvailableGB))
+                            DB Available (MBs) @RenderSortIcon(nameof(SDMTableRow.DBAvailableGB))
                         </th>
                         <th @onclick="() => SortTable(nameof(SDMTableRow.DBAvailablePercent))">
                             DB Available (%) @RenderSortIcon(nameof(SDMTableRow.DBAvailablePercent))
@@ -220,14 +220,15 @@
     private int totalPages = 1;
     private string currentSortColumn = string.Empty;
     private bool sortAscending = true;
+    IEnumerable<SDMTableRow> filtered; 
 
     private void SetPagedData()
-    {
-        totalPages = (int)Math.Ceiling((double)allRows.Count / pageSize);
-        pagedRows = allRows
-            .Skip((currentPage - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
+    { 
+        totalPages = (int)Math.Ceiling((double)filtered.ToList().Count / pageSize);
+            pagedRows = filtered.ToList()
+                .Skip((currentPage - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
     }
 
     private void GoToPage(int page)
@@ -248,15 +249,37 @@
     }
 
     [JSInvokable]
-    public void ResetTableToSDM()
+    public void ResetTableToSDM(string chartInfo)
     { 
-        selectedTableTitle = "SDM";
-        allRows = DataService.GetSDMTableDataAsync().Result;  
-        allRowsCount = allRows.Count.ToString();
+        allRows = DataService.GetSDMTableDataAsync().Result;
+
+        if (chartInfo == "sdmPieChart2")
+        {
+            selectedTableTitle = "SDM_IF_TR";
+            filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_TR").ToList();
+            allRowsCount = filtered.Count().ToString();
+        }
+        else if (chartInfo == "sdmPieChart3")
+        {
+            selectedTableTitle = "SDM_IF_POS";
+            filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_POS").ToList();
+            allRowsCount = filtered.Count().ToString();
+        }
+        else if (chartInfo == "sdmPieChart4")
+        {
+            selectedTableTitle = "SDM Log File Size";
+            filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File").ToList();
+            allRowsCount = filtered.Count().ToString();
+        }
+        else
+        {
+            selectedTableTitle = "SDM";
+            filtered = allRows.Where(x => x.DatabaseType == "SDM").ToList();
+            allRowsCount = filtered.Count().ToString();
+        }       
         SetPagedData();
         StateHasChanged();
     }
-
 
     [JSInvokable]
     public void OnSliceClick(string chartInfo)
@@ -267,7 +290,7 @@
         var chartId = parts[0];
         var label = parts[1];
 
-        IEnumerable<SDMTableRow> filtered = allRows;
+        filtered = allRows;
 
         selectedTableTitle = chartId switch
         {
@@ -333,13 +356,14 @@
 
 
     protected override async Task OnInitializedAsync()
-    {
+    { 
         if (allRows == null || !allRows.Any())
         {
-            allRows = await DataService.GetSDMTableDataAsync();            
-            allRowsCount = allRows.Count.ToString();
-            SetPagedData();
-            selectedTableTitle = "SDM"; // default value
+            allRows = await DataService.GetSDMTableDataAsync();    
+            selectedTableTitle = "SDM";
+            filtered = allRows.Where(x => x.DatabaseType == "SDM").ToList();
+            allRowsCount = filtered.Count().ToString(); 
+            SetPagedData(); 
         }
     }
 

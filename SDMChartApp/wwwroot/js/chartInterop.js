@@ -1,5 +1,5 @@
 ﻿// Global chart registry
-window._plotPieRegistry = {};
+window._plotPieRegistry = window._plotPieRegistry || {};
 
 window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
     const total = values.reduce((a, b) => a + b, 0);
@@ -27,7 +27,9 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
         displayModeBar: false
     };
 
-    function drawChart() {
+    let currentPull = new Array(values.length).fill(0);
+
+    function drawChart(pullArray) {
         const data = [{
             values: values,
             labels: labels,
@@ -41,15 +43,17 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
             insidetextorientation: "radial",
             textfont: {
                 size: 16,
-                family: "Arial",
-                color: "black"
-            }
+                family: "Arial"
+            },
+            pull: pullArray
         }];
 
-        Plotly.react(elementId, data, layout, config);
+        Plotly.react(elementId, data, layout, config).then(() => {
+            addCenterClickOverlay(elementId);
+        });
     }
 
-    drawChart();
+    drawChart(currentPull);
 
     const chartDiv = document.getElementById(elementId);
     let sliceClicked = false;
@@ -57,19 +61,27 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
     if (chartDiv && !chartDiv.hasClickHandler) {
 
         // Register reset function globally
-        window._plotPieRegistry[elementId] = () => {
-            drawChart();
+        window._plotPieRegistry[elementId] = {
+            reset: () => {
+                currentPull = new Array(values.length).fill(0);
+                drawChart(currentPull);
+            },
+            dotNetHelper: dotNetHelper
         };
 
         chartDiv.on('plotly_click', function (data) {
+            const clickedIndex = data.points[0].pointNumber;
             sliceClicked = true;
 
             // Reset all other charts
             for (let id in window._plotPieRegistry) {
                 if (id !== elementId) {
-                    window._plotPieRegistry[id]();
+                    window._plotPieRegistry[id].reset();
                 }
             }
+
+            currentPull = currentPull.map((v, i) => i === clickedIndex ? 0.04 : 0);
+            drawChart(currentPull);
 
             if (dotNetHelper) {
                 const label = data.points[0].label;
@@ -77,26 +89,44 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
             }
         });
 
-        chartDiv.addEventListener('click', function () {
-            if (!sliceClicked) {
-                drawChart();
-                if (dotNetHelper) {
-                    dotNetHelper.invokeMethodAsync('ResetTableToSDM');
-                }
-            }
-            sliceClicked = false;
-        });
-
-        document.addEventListener('click', function (event) {
-            const clickedInside = chartDiv.contains(event.target);
-            if (!clickedInside) {
-                drawChart();
-                if (dotNetHelper) {
-                    dotNetHelper.invokeMethodAsync('ResetTableToSDM');
-                }
-            }
-        });
-
         chartDiv.hasClickHandler = true;
+    }
+
+    function addCenterClickOverlay(elementId) {
+        const chartDiv = document.getElementById(elementId);
+        if (!chartDiv) return;
+
+        const oldOverlay = chartDiv.querySelector('.center-click-overlay');
+        if (oldOverlay) oldOverlay.remove();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'center-click-overlay';
+
+        const diameter = Math.min(chartDiv.offsetWidth, chartDiv.offsetHeight) * 0.3;
+
+        Object.assign(overlay.style, {
+            position: 'absolute',
+            width: `${diameter}px`,
+            height: `${diameter}px`,
+            top: `calc(50% - ${diameter / 2}px)`,
+            left: `calc(50% - ${diameter / 2}px)`,
+            borderRadius: '50%',
+            zIndex: 10,
+            cursor: 'pointer',
+            backgroundColor: 'transparent',
+        });
+
+        overlay.addEventListener('click', () => {
+            const chartInfo = window._plotPieRegistry[elementId];
+            if (chartInfo) {
+                chartInfo.reset();
+                if (chartInfo.dotNetHelper) {
+                    chartInfo.dotNetHelper.invokeMethodAsync('ResetTableToSDM', elementId);
+                }
+            }
+        });
+
+        chartDiv.style.position = 'relative';
+        chartDiv.appendChild(overlay);
     }
 };
