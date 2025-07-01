@@ -210,25 +210,37 @@
     private string chartTitle2 = "SDM_IF_TR";
     private string chartTitle3 = "SDM_IF_POS";
     private string chartTitle4 = "SDM Log File Size";
-    private string selectedTableTitle = "SDM"; 
+    private string selectedTableTitle = "SDM";
+
+    // Store the last sorted column to retain sort after filtering
+    private string lastSortedColumn = nameof(SDMTableRow.DBSizeGB);
+
     private string allRowsCount = "";
-    private List<SDMTableRow> masterRows = new(); 
-    private List<SDMTableRow> allRows = new List<SDMTableRow>();
-    private List<SDMTableRow> pagedRows = new List<SDMTableRow>();
+
+    // Master data from DB, not filtered
+    private List<SDMTableRow> masterRows = new();
+
+    // All loaded data, used for filtering and sorting
+    private List<SDMTableRow> allRows = new();
+
+    // Currently displayed page data
+    private List<SDMTableRow> pagedRows = new();
+
     private int currentPage = 1;
     private int pageSize = 10;
     private int totalPages = 1;
     private string currentSortColumn = string.Empty;
     private bool sortAscending = true;
-    IEnumerable<SDMTableRow> filtered; 
+
+    // Maintain the filtered dataset
+    private IEnumerable<SDMTableRow> filtered;
 
     private void SetPagedData()
-    { 
-        totalPages = (int)Math.Ceiling((double)filtered.ToList().Count / pageSize);
-            pagedRows = filtered.ToList()
-                .Skip((currentPage - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+    {
+        var filteredList = filtered?.ToList() ?? new List<SDMTableRow>(); // null check
+
+        totalPages = (int)Math.Ceiling((double)filteredList.Count / pageSize);
+        pagedRows = filteredList.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
     }
 
     private void GoToPage(int page)
@@ -249,10 +261,8 @@
     }
 
     [JSInvokable]
-    public void ResetTableToSDM(string chartInfo)
-    { 
-        allRows = DataService.GetSDMTableDataAsync().Result;
-
+    public async Task ResetTableToSDM(string chartInfo)
+    {  
         if (chartInfo == "sdmPieChart2")
         {
             selectedTableTitle = "SDM_IF_TR";
@@ -278,79 +288,87 @@
             allRowsCount = filtered.Count().ToString();
         }       
         SetPagedData();
+        SortTable(lastSortedColumn);
         StateHasChanged();
     }
 
     [JSInvokable]
     public void OnSliceClick(string chartInfo)
-    { 
+    {
         var parts = chartInfo.Split('|');
-        if (parts.Length != 2) return;
+        if (parts.Length != 2)
+            return;
 
-        var chartId = parts[0];
-        var label = parts[1];
+        string chartId = parts[0];
+        string label = parts[1];
 
         filtered = allRows;
 
-        selectedTableTitle = chartId switch
+        // Set chart title
+        if (chartId == "sdmPieChart1")
         {
-            "sdmPieChart1" => $"SDM ({label})",
-            "sdmPieChart2" => $"SDM_IF_TR ({label})",
-            "sdmPieChart3" => $"SDM_IF_POS ({label})",
-            "sdmPieChart4" => $"SDM Log File Size ({label})",
-            _ => "SDM"
-        };
+            selectedTableTitle = "SDM";
 
-        if (chartId == "sdmPieChart1") // SDM
-        {
-            filtered = label switch
-            {
-                "0-7 GB" => allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > 0 && x.DBSizeGB <= (7 * 1024)),
-                "7-8 GB" => allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > (7 * 1024) && x.DBSizeGB <= (8 * 1024)),
-                ">8 GB" => allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > (8 * 1024)),
-                "Missing Data" => allRows.Where(x => x.DatabaseType == "SDM" && (x.DBSizeGB <= 0 || x.DBSizeGB == null)),
-                _ => allRows
-            };
+            if (label == "0-7 GB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > 0 && x.DBSizeGB <= (7 * 1024));
+            else if (label == "7-8 GB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > (7 * 1024) && x.DBSizeGB <= (8 * 1024));
+            else if (label == ">8 GB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > (8 * 1024));
+            else if (label == "Missing Data")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM" && (x.DBSizeGB <= 0 || x.DBSizeGB == null));
         }
-        else if (chartId == "sdmPieChart2") // SDM_IF_TR
+        else if (chartId == "sdmPieChart2")
         {
-            filtered = label switch
-            {
-                "0-7 MB" => allRows.Where(x => x.DatabaseType == "SDM_IF_TR" && x.DBSizeGB > 0 && x.DBSizeGB <= 7),
-                "7-10 MB" => allRows.Where(x => x.DatabaseType == "SDM_IF_TR" && x.DBSizeGB > 7 && x.DBSizeGB <= 10),
-                ">10 MB" => allRows.Where(x => x.DatabaseType == "SDM_IF_TR" && x.DBSizeGB > 10),
-                "Missing Data" => allRows.Where(x => x.DatabaseType == "SDM_IF_TR" && (x.DBSizeGB <= 0 || x.DBSizeGB == null)),
-                _ => allRows
-            };
+            selectedTableTitle = "SDM_IF_TR";
+
+            if (label == "0-7 MB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_TR" && x.DBSizeGB > 0 && x.DBSizeGB <= 7);
+            else if (label == "7-10 MB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_TR" && x.DBSizeGB > 7 && x.DBSizeGB <= 10);
+            else if (label == ">10 MB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_TR" && x.DBSizeGB > 10);
+            else if (label == "Missing Data")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_TR" && (x.DBSizeGB <= 0 || x.DBSizeGB == null));
         }
-        else if (chartId == "sdmPieChart3") // SDM_IF_POS
+        else if (chartId == "sdmPieChart3")
         {
-            filtered = label switch
-            {
-                "0-7 MB" => allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && x.DBSizeGB > 0 && x.DBSizeGB <= 7),
-                "7-10 MB" => allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && x.DBSizeGB > 7 && x.DBSizeGB <= 10),
-                ">10 MB" => allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && x.DBSizeGB > 10),
-                "Missing Data" => allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && (x.DBSizeGB <= 0 || x.DBSizeGB == null)),
-                _ => allRows
-            };
+            selectedTableTitle = "SDM_IF_POS";
+
+            if (label == "0-7 MB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && x.DBSizeGB > 0 && x.DBSizeGB <= 7);
+            else if (label == "7-10 MB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && x.DBSizeGB > 7 && x.DBSizeGB <= 10);
+            else if (label == ">10 MB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && x.DBSizeGB > 10);
+            else if (label == "Missing Data")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && (x.DBSizeGB <= 0 || x.DBSizeGB == null));
         }
-        else if (chartId == "sdmPieChart4") // SDM Log File
+        else if (chartId == "sdmPieChart4")
         {
-            filtered = label switch
-            {
-                "0.0-0.5 GB" => allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > 0 && x.DBSizeGB <= (0.5 * 1024)),
-                "0.5-1 GB" => allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > (0.5 * 1024) && x.DBSizeGB <= (1 * 1024)),
-                ">1 GB" => allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > (1 * 1024)),
-                "Missing Data" => allRows.Where(x => x.DatabaseType == "SDM_Log_File" && (x.DBSizeGB <= 0 || x.DBSizeGB == null)),
-                _ => allRows
-            };
+            selectedTableTitle = "SDM Log File Size";
+
+            if (label == "0.0-0.5 GB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > 0 && x.DBSizeGB <= (0.5 * 1024));
+            else if (label == "0.5-1 GB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > (0.5 * 1024) && x.DBSizeGB <= (1 * 1024));
+            else if (label == ">1 GB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > (1 * 1024));
+            else if (label == "Missing Data")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && (x.DBSizeGB <= 0 || x.DBSizeGB == null));
+        }
+        else
+        {
+            selectedTableTitle = "SDM"; // default
         }
 
+        // Paging setup
         pagedRows = filtered.ToList();
         currentPage = 1;
         totalPages = (int)Math.Ceiling((double)pagedRows.Count / pageSize);
         pagedRows = pagedRows.Take(pageSize).ToList();
         allRowsCount = pagedRows.Count.ToString();
+        SortTable(lastSortedColumn);
         StateHasChanged();
     }
 
@@ -360,7 +378,6 @@
         if (allRows == null || !allRows.Any())
         {
             allRows = await DataService.GetSDMTableDataAsync();    
-            selectedTableTitle = "SDM";
             filtered = allRows.Where(x => x.DatabaseType == "SDM").ToList();
             allRowsCount = filtered.Count().ToString(); 
             SetPagedData(); 
@@ -425,6 +442,8 @@
 
     private void SortTable(string column)
     {
+        lastSortedColumn = column;
+
         if (currentSortColumn == column)
         {
             sortAscending = !sortAscending;
@@ -436,14 +455,16 @@
         }
 
         var prop = typeof(SDMTableRow).GetProperty(column);
-        if (prop == null) return;
+        if (prop == null || filtered == null) return; // Null check
 
-        allRows = sortAscending
-            ? allRows.OrderBy(x => prop.GetValue(x)).ToList()
-            : allRows.OrderByDescending(x => prop.GetValue(x)).ToList();
+        // Dynamic sort by property name
+        filtered = sortAscending
+            ? filtered.OrderBy(x => prop.GetValue(x, null)).ToList()
+            : filtered.OrderByDescending(x => prop.GetValue(x, null)).ToList();
 
         SetPagedData();
     }
+
 
     private MarkupString RenderSortIcon(string column)
     {
