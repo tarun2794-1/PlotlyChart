@@ -1,54 +1,49 @@
-﻿// Global chart registry to track all rendered pie charts
-// Used for resetting others when one is clicked
+﻿// Global chart registry to track all rendered pie charts for inter-chart coordination
 window._plotPieRegistry = window._plotPieRegistry || {};
 
-// Main function to render a donut (pie with hole) chart
 window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
-    // Calculate the total value to show in the center
     const total = values.reduce((a, b) => a + b, 0);
-
-    // Create custom text for each slice: "value (percentage)"
-    const customText = values.map((v, i) => {
-        const percent = ((v / total) * 100).toFixed(1);
-        return `${v}<br>(${percent}%)`;
-    });
-
-    // Plotly chart layout configuration
-    const layout = {
-        showlegend: false,
-        autosize: true,
-        paper_bgcolor: '#f7f7f7',
-        plot_bgcolor: '#f7f7f7',
-        margin: { t: 40, b: 40, l: 60, r: 60 },
-        annotations: [{
-            font: { size: 16 },
-            showarrow: false,
-            // Center text inside the donut hole
-            text: `Total Stores<br><b>${total}</b>`,
-            x: 0.5,
-            y: 0.5
-        }]
-    };
-
-    // Plotly config: responsive and hides toolbar
-    const config = {
-        responsive: true,
-        displayModeBar: false
-    };
-
-    // Store current "pull" values (how far each slice is pulled)
     let currentPull = new Array(values.length).fill(0);
+    let clickedSliceIndex = -1;
 
-    // Function to draw (or redraw) the chart
-    function drawChart(pullArray) {
+    // Function to convert hex color to rgba with alpha transparency
+    function hexToRgba(hex, alpha) {
+        let c = hex.replace('#', '');
+        if (c.length === 3) c = c.split('').map(ch => ch + ch).join('');
+        const r = parseInt(c.substring(0, 2), 16);
+        const g = parseInt(c.substring(2, 4), 16);
+        const b = parseInt(c.substring(4, 6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    // Function to render the pie chart
+    function drawChart(pullArray, clickedIndex = -1) {
+        const customText = values.map((v, i) => {
+            const percent = ((v / total) * 100).toFixed(1);
+            const content = `${v}<br>(${percent}%)`;
+            return i === clickedIndex ? `<b>${content}</b>` : content;
+        });
+
+        // Define slice outlines (glow effect)
+        const lineWidths = values.map((_, i) => i === clickedIndex ? 6 : 0);
+        const lineColors = colors.map((color, i) =>
+            i === clickedIndex ? hexToRgba(color, 0.5) : 'transparent'
+        );
+
         const data = [{
             values: values,
             labels: labels,
             type: 'pie',
-            hole: 0.6, // 60% hole makes it a donut chart
-            marker: { colors: colors },
+            hole: 0.6,
+            marker: {
+                colors: colors,
+                line: {
+                    width: lineWidths,
+                    color: lineColors
+                }
+            },
             text: customText,
-            textinfo: "text", // use the custom text
+            textinfo: "text",
             hoverinfo: "label+value+percent",
             textposition: "outside",
             insidetextorientation: "radial",
@@ -56,78 +51,90 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
                 size: 16,
                 family: "Arial"
             },
-            pull: pullArray // control which slice is pulled
+            pull: pullArray
         }];
 
-        // Plot or update the chart
+        const layout = {
+            showlegend: false,
+            autosize: true,
+            paper_bgcolor: '#f7f7f7',
+            plot_bgcolor: '#f7f7f7',
+            margin: { t: 40, b: 40, l: 60, r: 60 },
+            annotations: [{
+                font: { size: 16 },
+                showarrow: false,
+                text: `Total Stores<br><b>${total}</b>`,
+                x: 0.5,
+                y: 0.5
+            }]
+        };
+
+        const config = {
+            responsive: true,
+            displayModeBar: false
+        };
+
+        // Render chart and add center overlay for reset
         Plotly.react(elementId, data, layout, config).then(() => {
-            addCenterClickOverlay(elementId); // add click handler to the center
+            addCenterClickOverlay(elementId);
         });
     }
 
-    // Initial draw of the chart
-    drawChart(currentPull);
+    // Draw the initial chart
+    drawChart(currentPull, clickedSliceIndex);
 
-    // Get the div containing the chart
+    // Attach click event only once per chart
     const chartDiv = document.getElementById(elementId);
-    let sliceClicked = false;
-
-    // Ensure we don't double-bind events
     if (chartDiv && !chartDiv.hasClickHandler) {
-        // Register reset function in the global registry
+        // Register chart for coordinated reset
         window._plotPieRegistry[elementId] = {
             reset: () => {
-                currentPull = new Array(values.length).fill(0); // unpull all
-                drawChart(currentPull); // redraw
+                currentPull = new Array(values.length).fill(0);
+                clickedSliceIndex = -1;
+                drawChart(currentPull, clickedSliceIndex);
             },
-            dotNetHelper: dotNetHelper // store .NET interop object
+            dotNetHelper: dotNetHelper
         };
 
-        // When a slice is clicked
+        // Slice click handler
         chartDiv.on('plotly_click', function (data) {
             const clickedIndex = data.points[0].pointNumber;
-            sliceClicked = true;
 
-            // Reset all *other* pie charts (linked behavior)
+            // Reset all other pie charts
             for (let id in window._plotPieRegistry) {
                 if (id !== elementId) {
                     window._plotPieRegistry[id].reset();
                 }
             }
 
-            // Pull only the clicked slice (e.g., 4% offset)
-            currentPull = currentPull.map((v, i) => i === clickedIndex ? 0.04 : 0);
-            drawChart(currentPull); // redraw with pulled slice
+            // Update pull array for selected slice
+            currentPull = currentPull.map((v, i) => i === clickedIndex ? 0.01 : 0);
+            clickedSliceIndex = clickedIndex;
+            drawChart(currentPull, clickedSliceIndex);
 
-            // Call .NET method to handle logic in Blazor (e.g., filter table)
+            // Notify .NET handler of slice click
             if (dotNetHelper) {
                 const label = data.points[0].label;
-                dotNetHelper.invokeMethodAsync('OnSliceClick', elementId + "|" + label);
+                dotNetHelper.invokeMethodAsync('OnSliceClick', `${elementId}|${label}`);
             }
         });
 
-        // Prevent re-binding
         chartDiv.hasClickHandler = true;
     }
 
-    // Adds a transparent circular overlay in the center hole
-    // Clicking it will reset the chart (i.e., unselect any slice)
+    // Adds an invisible div at the center of the donut to handle reset click
     function addCenterClickOverlay(elementId) {
         const chartDiv = document.getElementById(elementId);
         if (!chartDiv) return;
 
-        // Remove old overlay if it exists
         const oldOverlay = chartDiv.querySelector('.center-click-overlay');
         if (oldOverlay) oldOverlay.remove();
 
-        // Create a transparent circular div
         const overlay = document.createElement('div');
         overlay.className = 'center-click-overlay';
 
-        // Estimate size of center hole to position overlay correctly
         const diameter = Math.min(chartDiv.offsetWidth, chartDiv.offsetHeight) * 0.3;
 
-        // Style the overlay to sit in the middle
         Object.assign(overlay.style, {
             position: 'absolute',
             width: `${diameter}px`,
@@ -140,24 +147,18 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
             backgroundColor: 'transparent'
         });
 
-        // On center click: reset pull and invoke Blazor reset
         overlay.addEventListener('click', () => {
-            // Reset all pie charts
             for (let id in window._plotPieRegistry) {
                 window._plotPieRegistry[id].reset();
             }
 
-            // Call .NET method only for the chart clicked
             const chartInfo = window._plotPieRegistry[elementId];
-            if (chartInfo && chartInfo.dotNetHelper) {
+            if (chartInfo?.dotNetHelper) {
                 chartInfo.dotNetHelper.invokeMethodAsync('ResetTableToSDM', elementId);
             }
         });
 
-        // Required for absolute positioning to work
         chartDiv.style.position = 'relative';
-
-        // Add the overlay to the chart
         chartDiv.appendChild(overlay);
     }
 };
