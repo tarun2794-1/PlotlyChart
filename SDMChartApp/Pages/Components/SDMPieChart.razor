@@ -1,4 +1,4 @@
-﻿@page "/chart" 
+﻿@page "/chart"  
 @using SDMChartApp.Services
 @using SDMChartApp.Models
 @using SDMChartApp
@@ -22,12 +22,12 @@
                     <span>0-7 GB</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background-color: #E8720A;"></span>
+                    <span class="legend-color" style="background-color: #C75A00;"></span>
                     <span>7-8 GB</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #DB0007;"></span>
-                    <span>>8 GB</span>
+                    <span>>=8 GB</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #57595B;"></span>
@@ -50,12 +50,12 @@
                     <span>0-7 MB</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background-color: #E8720A;"></span>
+                    <span class="legend-color" style="background-color: #C75A00;"></span>
                     <span>7-10 MB</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #DB0007;"></span>
-                    <span>>10 MB</span>
+                    <span>>=10 MB</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #57595B;"></span>
@@ -78,12 +78,12 @@
                     <span>0-7 MB</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background-color: #E8720A;"></span>
+                    <span class="legend-color" style="background-color: #C75A00;"></span>
                     <span>7-10 MB</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #DB0007;"></span>
-                    <span>>10 MB</span>
+                    <span>>=10 MB</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #57595B;"></span>
@@ -106,12 +106,12 @@
                     <span>0.0-0.5 GB</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background-color: #E8720A;"></span>
+                    <span class="legend-color" style="background-color: #C75A00;"></span>
                     <span>0.5-1 GB</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #DB0007;"></span>
-                    <span>>1 GB</span>
+                    <span>>=1 GB</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #57595B;"></span>
@@ -180,7 +180,7 @@
         </div>       
         <div class="pagination-bar">
             <div class="pagination-info">
-                Showing @pagedRows.Count of @allRowsCount rows
+                Showing @pagedRows.Count of @filtered.Count() rows
             </div>
             <div class="pagination-buttons">
                 <button @onclick="() => GoToPage(currentPage - 1)" disabled="@(@currentPage == 1)">‹</button>
@@ -331,11 +331,11 @@
             selectedTableTitle = "SDM";
 
             if (label == "0-7 GB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > 0 && x.DBSizeGB <= (7 * 1024));
+                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > 0 && x.DBSizeGB < (7 * 1024));
             else if (label == "7-8 GB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > (7 * 1024) && x.DBSizeGB <= (8 * 1024));
-            else if (label == ">8 GB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > (8 * 1024));
+                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB >= (7 * 1024) && x.DBSizeGB < (8 * 1024));
+            else if (label == ">=8 GB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB >= (8 * 1024));
             else if (label == "Missing Data")
                 filtered = allRows.Where(x => x.DatabaseType == "SDM" && (x.DBSizeGB <= 0 || x.DBSizeGB == null));
         }
@@ -344,11 +344,11 @@
             selectedTableTitle = "SDM_IF_TR";
 
             if (label == "0-7 MB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_TR" && x.DBSizeGB > 0 && x.DBSizeGB <= 7);
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_TR" && x.DBSizeGB > 0 && x.DBSizeGB < 7);
             else if (label == "7-10 MB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_TR" && x.DBSizeGB > 7 && x.DBSizeGB <= 10);
-            else if (label == ">10 MB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_TR" && x.DBSizeGB > 10);
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_TR" && x.DBSizeGB >= 7 && x.DBSizeGB < 10);
+            else if (label == ">=10 MB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_TR" && x.DBSizeGB >= 10);
             else if (label == "Missing Data")
                 filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_TR" && (x.DBSizeGB <= 0 || x.DBSizeGB == null));
         }
@@ -357,11 +357,11 @@
             selectedTableTitle = "SDM_IF_POS";
 
             if (label == "0-7 MB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && x.DBSizeGB > 0 && x.DBSizeGB <= 7);
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && x.DBSizeGB > 0 && x.DBSizeGB < 7);
             else if (label == "7-10 MB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && x.DBSizeGB > 7 && x.DBSizeGB <= 10);
-            else if (label == ">10 MB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && x.DBSizeGB > 10);
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && x.DBSizeGB >= 7 && x.DBSizeGB < 10);
+            else if (label == ">=10 MB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && x.DBSizeGB >= 10);
             else if (label == "Missing Data")
                 filtered = allRows.Where(x => x.DatabaseType == "SDM_IF_POS" && (x.DBSizeGB <= 0 || x.DBSizeGB == null));
         }
@@ -370,11 +370,11 @@
             selectedTableTitle = "SDM Log File Size";
 
             if (label == "0.0-0.5 GB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > 0 && x.DBSizeGB <= (0.5 * 1024));
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > 0 && x.DBSizeGB < (0.5 * 1024));
             else if (label == "0.5-1 GB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > (0.5 * 1024) && x.DBSizeGB <= (1 * 1024));
-            else if (label == ">1 GB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > (1 * 1024));
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB >= (0.5 * 1024) && x.DBSizeGB < (1 * 1024));
+            else if (label == ">=1 GB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB >= (1 * 1024));
             else if (label == "Missing Data")
                 filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && (x.DBSizeGB <= 0 || x.DBSizeGB == null));
         }
@@ -411,16 +411,16 @@
         {
             var labelDict = await DataService.GetSDMPieChartDataAsync();
 
-            var colors = new[] { "#4CA71F", "#E8720A", "#DB0007", "#57595B" };
+            var colors = new[] { "#4CA71F", "#C75A00", "#DB0007", "#57595B" };
             var dotNetRef = DotNetObjectReference.Create(this);
 
             // SDM
             var dataSDM = allRows.Where(x => x.DatabaseType == "SDM");
             var values1 = new[]
             {
-                dataSDM.Count(x => x.DBSizeGB > 0 && x.DBSizeGB <= (7*1024)),
-                dataSDM.Count(x => x.DBSizeGB > (7*1024) && x.DBSizeGB <= (8*1024)),
-                dataSDM.Count(x => x.DBSizeGB > (8*1024)),
+                dataSDM.Count(x => x.DBSizeGB > 0 && x.DBSizeGB < (7*1024)),
+                dataSDM.Count(x => x.DBSizeGB >= (7*1024) && x.DBSizeGB < (8*1024)),
+                dataSDM.Count(x => x.DBSizeGB >= (8*1024)),
                 dataSDM.Count() - dataSDM.Count(x => x.DBSizeGB > 0)
             };
             await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart1", labelDict["SDM"].ToArray(), values1, colors, dotNetRef);
@@ -429,9 +429,9 @@
             var dataSDMIFTR = allRows.Where(x => x.DatabaseType == "SDM_IF_TR");
             var values2 = new[]
             {
-                dataSDMIFTR.Count(x => x.DBSizeGB > 0 && x.DBSizeGB <= 7),
-                dataSDMIFTR.Count(x => x.DBSizeGB > 7 && x.DBSizeGB <= 10),
-                dataSDMIFTR.Count(x => x.DBSizeGB > 10),
+                dataSDMIFTR.Count(x => x.DBSizeGB > 0 && x.DBSizeGB < 7),
+                dataSDMIFTR.Count(x => x.DBSizeGB >= 7 && x.DBSizeGB < 10),
+                dataSDMIFTR.Count(x => x.DBSizeGB >= 10),
                 dataSDMIFTR.Count() - dataSDMIFTR.Count(x => x.DBSizeGB > 0)
             };
             await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart2", labelDict["SDM_IF_TR"].ToArray(), values2, colors, dotNetRef);
@@ -440,9 +440,9 @@
             var dataSDMIFPOS = allRows.Where(x => x.DatabaseType == "SDM_IF_POS");
             var values3 = new[]
             {
-                dataSDMIFPOS.Count(x => x.DBSizeGB > 0 && x.DBSizeGB <= 7),
-                dataSDMIFPOS.Count(x => x.DBSizeGB > 7 && x.DBSizeGB <= 10),
-                dataSDMIFPOS.Count(x => x.DBSizeGB > 10),
+                dataSDMIFPOS.Count(x => x.DBSizeGB > 0 && x.DBSizeGB < 7),
+                dataSDMIFPOS.Count(x => x.DBSizeGB >= 7 && x.DBSizeGB < 10),
+                dataSDMIFPOS.Count(x => x.DBSizeGB >= 10),
                 dataSDMIFPOS.Count() - dataSDMIFPOS.Count(x => x.DBSizeGB > 0)
             };
             await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart3", labelDict["SDM_IF_POS"].ToArray(), values3, colors, dotNetRef);
@@ -451,9 +451,9 @@
             var dataSDMLogFile = allRows.Where(x => x.DatabaseType == "SDM_Log_File");
             var values4 = new[]
             {
-                dataSDMLogFile.Count(x => x.DBSizeGB > 0 && x.DBSizeGB <= (0.5*1024)),
-                dataSDMLogFile.Count(x => x.DBSizeGB > (0.5*1024) && x.DBSizeGB <= (1*1024)),
-                dataSDMLogFile.Count(x => x.DBSizeGB > (1*1024)),
+                dataSDMLogFile.Count(x => x.DBSizeGB > 0 && x.DBSizeGB < (0.5*1024)),
+                dataSDMLogFile.Count(x => x.DBSizeGB >= (0.5*1024) && x.DBSizeGB < (1*1024)),
+                dataSDMLogFile.Count(x => x.DBSizeGB >= (1*1024)),
                 dataSDMLogFile.Count() - dataSDMLogFile.Count(x => x.DBSizeGB > 0)
             };
             await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart4", labelDict["SDM_Log_File"].ToArray(), values4, colors, dotNetRef);

@@ -51,6 +51,12 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
             text: customText,
             textinfo: "text",
             hoverinfo: "label+value+percent",
+            hoverlabel: { 
+                font: {
+                    size: 16,  
+                    family: "Arial Black, sans-serif" 
+                }
+            },
             textposition: "outside",
             insidetextorientation: "radial",
             textfont: {

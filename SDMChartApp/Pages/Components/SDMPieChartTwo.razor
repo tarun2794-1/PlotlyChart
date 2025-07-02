@@ -3,16 +3,16 @@
 @using SDMChartApp.Models
 @using SDMChartApp
 @inject SDMService DataService
-@inject IJSRuntime JSRuntime
+@inject IJSRuntime JSRuntime 
 
 <div class="chart-layout-new">
 
-    <div class="chart-card chart-align-third">
+    <div class="chart-card-new">
         <div class="chart-header">
             <span>SDM</span>
             <img src="images/excelicon.png" title="Export" class="icon-image" @onclick="() => OnExportClick(chartTitle1)" />
         </div>
-        <div class="chart-box" id="sdmPieChart1"></div>
+        <div class="chart-box" id="sdmPieChart5"></div>
         <div class="chart-footer">
             <div class="legend">
                 <div class="legend-item">
@@ -20,12 +20,12 @@
                     <span>0-7 GB</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background-color: #E8720A;"></span>
+                    <span class="legend-color" style="background-color: #C75A00;"></span>
                     <span>7-8 GB</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #DB0007;"></span>
-                    <span>>8 GB</span>
+                    <span>>=8 GB</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #57595B;"></span>
@@ -35,12 +35,12 @@
         </div>
     </div>
 
-    <div class="chart-card chart-align-third">
+    <div class="chart-card-new">
         <div class="chart-header">
             <span>SDM Log File Size</span>
             <img src="images/excelicon.png" title="Export" class="icon-image" @onclick="() => OnExportClick(chartTitle4)" />
         </div>
-        <div class="chart-box" id="sdmPieChart4"></div>
+        <div class="chart-box" id="sdmPieChart6"></div>
         <div class="chart-footer">
             <div class="legend">
                 <div class="legend-item">
@@ -48,12 +48,12 @@
                     <span>0.0-0.5 GB</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background-color: #E8720A;"></span>
+                    <span class="legend-color" style="background-color: #C75A00;"></span>
                     <span>0.5-1 GB</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #DB0007;"></span>
-                    <span>>1 GB</span>
+                    <span>>=1 GB</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #57595B;"></span>
@@ -121,9 +121,9 @@
             </table>
         </div>
 
-        <div class="pagination-bar">
+        <div class="pagination-bar-new">
             <div class="pagination-info">
-                Showing @pagedRows.Count of @allRowsCount rows
+                Showing @pagedRows.Count of @filtered.Count() rows
             </div>
             <div class="pagination-buttons">
                 <button @onclick="() => GoToPage(currentPage - 1)" disabled="@(@currentPage == 1)">‹</button>
@@ -181,15 +181,35 @@
         StateHasChanged();
     }
 
-    private void OnExportClick(string chartTitle)
+    private async void OnExportClick(string chartTitle)
     {
-        JSRuntime.InvokeVoidAsync("alert", $"Export clicked for: {chartTitle}");
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to export '{chartTitle}'?");
+        if (confirmed)
+        {
+            var exportData = filtered?.Select(row => new
+            {
+                row.Segment,
+                row.Market,
+                row.StoreId,
+                row.StoreName,
+                DBSize = row.DBSizeGB,
+                DBUsed = $"{row.DBUsedPercent}%",
+                DBAvailable = row.DBAvailableGB,
+                DBAvailablePercent = $"{row.DBAvailablePercent}%",
+                BackupDate = row.LastBackupOn.ToString("dd/MM/yyyy")
+            }).ToList();
+
+            var json = System.Text.Json.JsonSerializer.Serialize(exportData);
+            chartTitle = chartTitle + "__" + System.DateTime.Now.ToString();
+
+            await JSRuntime.InvokeVoidAsync("exportJsonToXlsx", json, $"{chartTitle}.xlsx");
+        }
     }
 
     [JSInvokable]
     public async Task ResetTableToSDM(string chartInfo)
     {
-        if (chartInfo == "sdmPieChart4")
+        if (chartInfo == "sdmPieChart6")
         {
             selectedTableTitle = "SDM Log File Size";
             filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File").ToList();
@@ -209,42 +229,42 @@
     [JSInvokable]
     public void OnSliceClick(string chartInfo)
     {
-        // var parts = chartInfo.Split('|');
-        // if (parts.Length != 2) return;
+        var parts = chartInfo.Split('|');
+        if (parts.Length != 2) return;
 
-        // string chartId = parts[0];
-        // string label = parts[1];
+        string chartId = parts[0];
+        string label = parts[1];
 
-        // if (chartId == "sdmPieChart1")
-        // {
-        //     selectedTableTitle = "SDM";
-        //     if (label == "0-7 GB")
-        //         filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > 0 && x.DBSizeGB <= (7 * 1024));
-        //     else if (label == "7-8 GB")
-        //         filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > (7 * 1024) && x.DBSizeGB <= (8 * 1024));
-        //     else if (label == ">8 GB")
-        //         filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > (8 * 1024));
-        //     else
-        //         filtered = allRows.Where(x => x.DatabaseType == "SDM" && (x.DBSizeGB <= 0 || x.DBSizeGB == null));
-        // }
-        // else if (chartId == "sdmPieChart4")
-        // {
-        //     selectedTableTitle = "SDM Log File Size";
-        //     if (label == "0.0-0.5 GB")
-        //         filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > 0 && x.DBSizeGB <= (0.5 * 1024));
-        //     else if (label == "0.5-1 GB")
-        //         filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > (0.5 * 1024) && x.DBSizeGB <= (1 * 1024));
-        //     else if (label == ">1 GB")
-        //         filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > (1 * 1024));
-        //     else
-        //         filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && (x.DBSizeGB <= 0 || x.DBSizeGB == null));
-        // }
+        if (chartId == "sdmPieChart5")
+        {
+            selectedTableTitle = "SDM";
+            if (label == "0-7 GB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > 0 && x.DBSizeGB < (7 * 1024));
+            else if (label == "7-8 GB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB >= (7 * 1024) && x.DBSizeGB < (8 * 1024));
+            else if (label == ">=8 GB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB >= (8 * 1024));
+            else
+                filtered = allRows.Where(x => x.DatabaseType == "SDM" && (x.DBSizeGB <= 0 || x.DBSizeGB == null));
+        }
+        else if (chartId == "sdmPieChart6")
+        {
+            selectedTableTitle = "SDM Log File Size";
+            if (label == "0.0-0.5 GB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > 0 && x.DBSizeGB < (0.5 * 1024));
+            else if (label == "0.5-1 GB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB >= (0.5 * 1024) && x.DBSizeGB < (1 * 1024));
+            else if (label == ">=1 GB")
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB >= (1 * 1024));
+            else
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && (x.DBSizeGB <= 0 || x.DBSizeGB == null));
+        }
 
-        // currentPage = 1;
-        // allRowsCount = filtered.Count().ToString();
-        // SetPagedData();
-        // SortTable(lastSortedColumn);
-        // StateHasChanged();
+        currentPage = 1;
+        allRowsCount = filtered.Count().ToString();
+        SetPagedData();
+        SortTable(lastSortedColumn);
+        StateHasChanged();
     }
 
     protected override async Task OnInitializedAsync()
@@ -260,28 +280,28 @@
         if (firstRender)
         {
             var labelDict = await DataService.GetSDMPieChartDataAsync();
-            var colors = new[] { "#4CA71F", "#E8720A", "#DB0007", "#57595B" };
+            var colors = new[] { "#4CA71F", "#C75A00", "#DB0007", "#57595B" };
             var dotNetRef = DotNetObjectReference.Create(this);
 
             var dataSDM = allRows.Where(x => x.DatabaseType == "SDM");
             var values1 = new[]
             {
-                dataSDM.Count(x => x.DBSizeGB > 0 && x.DBSizeGB <= (7*1024)),
-                dataSDM.Count(x => x.DBSizeGB > (7*1024) && x.DBSizeGB <= (8*1024)),
-                dataSDM.Count(x => x.DBSizeGB > (8*1024)),
+                dataSDM.Count(x => x.DBSizeGB > 0 && x.DBSizeGB < (7*1024)),
+                dataSDM.Count(x => x.DBSizeGB > (7*1024) && x.DBSizeGB < (8*1024)),
+                dataSDM.Count(x => x.DBSizeGB >= (8*1024)),
                 dataSDM.Count() - dataSDM.Count(x => x.DBSizeGB > 0)
             };
-            await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart1", labelDict["SDM"].ToArray(), values1, colors, dotNetRef);
+            await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart5", labelDict["SDM"].ToArray(), values1, colors, dotNetRef);
 
             var dataSDMLogFile = allRows.Where(x => x.DatabaseType == "SDM_Log_File");
             var values4 = new[]
             {
-                dataSDMLogFile.Count(x => x.DBSizeGB > 0 && x.DBSizeGB <= (0.5*1024)),
-                dataSDMLogFile.Count(x => x.DBSizeGB > (0.5*1024) && x.DBSizeGB <= (1*1024)),
-                dataSDMLogFile.Count(x => x.DBSizeGB > (1*1024)),
+                dataSDMLogFile.Count(x => x.DBSizeGB > 0 && x.DBSizeGB < (0.5*1024)),
+                dataSDMLogFile.Count(x => x.DBSizeGB > (0.5*1024) && x.DBSizeGB < (1*1024)),
+                dataSDMLogFile.Count(x => x.DBSizeGB >= (1*1024)),
                 dataSDMLogFile.Count() - dataSDMLogFile.Count(x => x.DBSizeGB > 0)
             };
-            await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart4", labelDict["SDM_Log_File"].ToArray(), values4, colors, dotNetRef);
+            await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart6", labelDict["SDM_Log_File"].ToArray(), values4, colors, dotNetRef);
         }
     }
 

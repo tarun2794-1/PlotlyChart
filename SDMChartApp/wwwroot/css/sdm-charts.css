@@ -6,15 +6,15 @@
     box-sizing: border-box;
     padding: 20px; 
 }
-.chart-layout-new  {
+.chart-layout-new {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: auto auto; /* or use 1fr 1fr if height is fixed */
+    grid-template-columns: 1fr 2fr; /* left: charts, right: table */
+    grid-template-rows: auto auto;
     gap: 20px;
     width: 100%;
     box-sizing: border-box;
     padding: 20px;
-    height: 100%; /* Add this if the container has height */
+    height: 100%;
 }
 .table-expanded {
     grid-column: 1 / -1;
@@ -31,6 +31,18 @@
     align-items: center;
     text-align: center;
     overflow: hidden; /* Ensures border-radius applies properly */
+}
+.chart-card-new {
+    background-color: #f7f7f7;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    overflow: hidden;
+    grid-column: 1 / 2; /* Optional explicit declaration */
 }
 
 .chart-align-third {
@@ -94,15 +106,17 @@
     grid-row-start: 2;
 }
 .table-section-new {
-    grid-column: 1 / 3; /* Take first two columns */
-    grid-row: 1 / span 2; /* Take both rows */
+    grid-column: 2 / 3; 
+    grid-row: 1 / span 2;
     display: flex;
     flex-direction: column;
     height: 100%;
 }
 .table-wrapper-new {
     flex: 1; /* Take up all available vertical space */
-    overflow: auto;
+    overflow: hidden;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
     background-color: #f0f0f0;
     padding: 0 10px;
     box-shadow: 0px 6px 12px -4px rgba(0, 0, 0, 0.3);
@@ -165,6 +179,21 @@
 
 .pagination-bar
 {
+    width: 100%;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: right;
+    align-items: right;
+    gap: 16px;
+    margin: 12px 0;
+    flex-wrap: wrap;
+    font-size: 14px;
+    width: 100%;
+    background-color: #f0f0f0;
+}
+.pagination-bar-new {
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
     width: 100%;
     background-color: #f0f0f0;
     display: flex;
