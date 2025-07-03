@@ -124,7 +124,7 @@
     <div class="table-section">
         <div class="table-header">
             <span>@selectedTableTitle</span>
-            <img src="images/excelicon.png" title="Export" class="icon-image" @onclick="() => OnExportClick(selectedTableTitle)" />
+            <img src="images/excelicon.png" title="Export" class="icon-image" @onclick="() => OnExportClick(tableText)" />
         </div>
 
         <div class="table-wrapper">
@@ -213,6 +213,7 @@
     private string chartTitle4 = "SDM Log File Size";
     private string selectedTableTitle = "SDM";
     private string gbText = "GBs"; 
+    private string tableText = "TableData";
     // Store the last sorted column to retain sort after filtering
     private string lastSortedColumn = nameof(SDMTableRow.DBSizeGB);
 
@@ -261,22 +262,54 @@
         bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to export '{chartTitle}'?");
         if (confirmed)
         {
-            var exportData = filtered?.Select(row => new
+            string json = "";
+            if (chartTitle == tableText)
             {
-                row.Segment,
-                row.Market,
-                row.StoreId,
-                row.StoreName,
-                DBSize = row.DBSizeGB,
-                DBUsed = $"{row.DBUsedPercent}%",
-                DBAvailable = row.DBAvailableGB,
-                DBAvailablePercent = $"{row.DBAvailablePercent}%",
-                BackupDate = row.LastBackupOn.ToString("dd/MM/yyyy")
-            }).ToList();
+                var exportData = filtered?.Select(row => new
+                {
+                    row.Segment,
+                    row.Market,
+                    row.StoreId,
+                    row.StoreName,
+                    DBSize = row.DBSizeGB,
+                    DBUsed = $"{row.DBUsedPercent}%",
+                    DBAvailable = row.DBAvailableGB,
+                    DBAvailablePercent = $"{row.DBAvailablePercent}%",
+                    BackupDate = row.LastBackupOn.ToString("dd/MM/yyyy")
+                }).ToList();
+                json = System.Text.Json.JsonSerializer.Serialize(exportData);
 
-            var json = System.Text.Json.JsonSerializer.Serialize(exportData);
-            chartTitle = chartTitle + "__" + System.DateTime.Now.ToString();
+            }
+            else
+            {
+                string filterString = "";
+                if (selectedTableTitle == "SDM Log File Size")
+                {
+                    filterString = "SDM_Log_File";
+                }
+                else
+                {
+                    filterString = selectedTableTitle;
+                }
+                var exportDatas = allRows?.
+                Where(x => x.DatabaseType == filterString).
+                Select(row => new
+                {
+                    row.Segment,
+                    row.Market,
+                    row.StoreId,
+                    row.StoreName,
+                    DBSize = row.DBSizeGB,
+                    DBUsed = $"{row.DBUsedPercent}%",
+                    DBAvailable = row.DBAvailableGB,
+                    DBAvailablePercent = $"{row.DBAvailablePercent}%",
+                    BackupDate = row.LastBackupOn.ToString("dd/MM/yyyy")
+                }).ToList();
+                json = System.Text.Json.JsonSerializer.Serialize(exportDatas);
 
+            }
+            if (string.IsNullOrEmpty(json)) return;
+            chartTitle = selectedTableTitle + "__" + System.DateTime.Now.ToString();
             await JSRuntime.InvokeVoidAsync("exportJsonToXlsx", json, $"{chartTitle}.xlsx");
         }
     }
@@ -313,7 +346,7 @@
             allRowsCount = filtered.Count().ToString();
         }       
         SetPagedData();
-        SortTable(lastSortedColumn);
+        SortTable(lastSortedColumn); 
         StateHasChanged();
     }
 
@@ -394,7 +427,7 @@
         totalPages = (int)Math.Ceiling((double)pagedRows.Count / pageSize);
         pagedRows = pagedRows.Take(pageSize).ToList();
         allRowsCount = pagedRows.Count.ToString();
-        SortTable(lastSortedColumn);
+        SortTable(lastSortedColumn); 
         StateHasChanged();
     }
 
