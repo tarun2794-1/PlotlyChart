@@ -19,6 +19,7 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
     // Function to render the pie chart
     function drawChart(pullArray, clickedIndex = -1) {
         const customText = values.map((v, i) => {
+            if (v === 0) return ''; // Don't show text if value is 0
             const percent = ((v / total) * 100).toFixed(1);
             return `${v}<br>(${percent}%)`;
         });
@@ -35,6 +36,7 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
         const lineColors = colors.map((color, i) =>
             i === clickedIndex ? hexToRgba(color, 0.5) : 'transparent'
         );
+        const textPositions = values.map((v) => v === 0 ? 'none' : 'outside');
 
         const data = [{
             values: values,
@@ -57,7 +59,7 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
                     family: "Arial Black, sans-serif" 
                 }
             },
-            textposition: "outside",
+            textposition: textPositions,
             insidetextorientation: "radial",
             textfont: {
                 size: 14,
@@ -179,5 +181,5 @@ window.plotPieChart = (elementId, labels, values, colors, dotNetHelper) => {
 
         chartDiv.style.position = 'relative';
         chartDiv.appendChild(overlay);
-    }
+    } 
 };

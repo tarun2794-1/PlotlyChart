@@ -86,13 +86,13 @@
                             Store Name @RenderSortIcon(nameof(SDMTableRow.StoreName))
                         </th>
                         <th @onclick="() => SortTable(nameof(SDMTableRow.DBSizeGB))">
-                            DB Size (MBs) @RenderSortIcon(nameof(SDMTableRow.DBSizeGB))
+                            DB Size (GBs) @RenderSortIcon(nameof(SDMTableRow.DBSizeGB))
                         </th>
                         <th @onclick="() => SortTable(nameof(SDMTableRow.DBUsedPercent))">
                             DB Used (%) @RenderSortIcon(nameof(SDMTableRow.DBUsedPercent))
                         </th>
                         <th @onclick="() => SortTable(nameof(SDMTableRow.DBAvailableGB))">
-                            DB Available (MBs) @RenderSortIcon(nameof(SDMTableRow.DBAvailableGB))
+                            DB Available (GBs) @RenderSortIcon(nameof(SDMTableRow.DBAvailableGB))
                         </th>
                         <th @onclick="() => SortTable(nameof(SDMTableRow.DBAvailablePercent))">
                             DB Available (%) @RenderSortIcon(nameof(SDMTableRow.DBAvailablePercent))
@@ -239,11 +239,11 @@
         {
             selectedTableTitle = "SDM";
             if (label == "0-7 GB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > 0 && x.DBSizeGB < (7 * 1024));
+                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB > 0 && x.DBSizeGB < (7 ));
             else if (label == "7-8 GB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB >= (7 * 1024) && x.DBSizeGB < (8 * 1024));
+                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB >= (7 ) && x.DBSizeGB < (8 ));
             else if (label == ">=8 GB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB >= (8 * 1024));
+                filtered = allRows.Where(x => x.DatabaseType == "SDM" && x.DBSizeGB >= (8 ));
             else
                 filtered = allRows.Where(x => x.DatabaseType == "SDM" && (x.DBSizeGB <= 0 || x.DBSizeGB == null));
         }
@@ -251,11 +251,11 @@
         {
             selectedTableTitle = "SDM Log File Size";
             if (label == "0.0-0.5 GB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > 0 && x.DBSizeGB < (0.5 * 1024));
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB > 0 && x.DBSizeGB < (0.5 ));
             else if (label == "0.5-1 GB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB >= (0.5 * 1024) && x.DBSizeGB < (1 * 1024));
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB >= (0.5 ) && x.DBSizeGB < (1 ));
             else if (label == ">=1 GB")
-                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB >= (1 * 1024));
+                filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && x.DBSizeGB >= (1 ));
             else
                 filtered = allRows.Where(x => x.DatabaseType == "SDM_Log_File" && (x.DBSizeGB <= 0 || x.DBSizeGB == null));
         }
@@ -286,9 +286,9 @@
             var dataSDM = allRows.Where(x => x.DatabaseType == "SDM");
             var values1 = new[]
             {
-                dataSDM.Count(x => x.DBSizeGB > 0 && x.DBSizeGB < (7*1024)),
-                dataSDM.Count(x => x.DBSizeGB > (7*1024) && x.DBSizeGB < (8*1024)),
-                dataSDM.Count(x => x.DBSizeGB >= (8*1024)),
+                dataSDM.Count(x => x.DBSizeGB > 0 && x.DBSizeGB < (7)),
+                dataSDM.Count(x => x.DBSizeGB > (7) && x.DBSizeGB < (8)),
+                dataSDM.Count(x => x.DBSizeGB >= (8)),
                 dataSDM.Count() - dataSDM.Count(x => x.DBSizeGB > 0)
             };
             await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart5", labelDict["SDM"].ToArray(), values1, colors, dotNetRef);
@@ -296,9 +296,9 @@
             var dataSDMLogFile = allRows.Where(x => x.DatabaseType == "SDM_Log_File");
             var values4 = new[]
             {
-                dataSDMLogFile.Count(x => x.DBSizeGB > 0 && x.DBSizeGB < (0.5*1024)),
-                dataSDMLogFile.Count(x => x.DBSizeGB > (0.5*1024) && x.DBSizeGB < (1*1024)),
-                dataSDMLogFile.Count(x => x.DBSizeGB >= (1*1024)),
+                dataSDMLogFile.Count(x => x.DBSizeGB > 0 && x.DBSizeGB < (0.5)),
+                dataSDMLogFile.Count(x => x.DBSizeGB > (0.5) && x.DBSizeGB < (1)),
+                dataSDMLogFile.Count(x => x.DBSizeGB >= (1)),
                 dataSDMLogFile.Count() - dataSDMLogFile.Count(x => x.DBSizeGB > 0)
             };
             await JSRuntime.InvokeVoidAsync("plotPieChart", "sdmPieChart6", labelDict["SDM_Log_File"].ToArray(), values4, colors, dotNetRef);
