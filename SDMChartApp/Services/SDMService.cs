@@ -9,10 +9,10 @@ namespace SDMChartApp.Services // Replace with your actual namespace
         {
             return new Dictionary<string, List<string>>
             {
-                { "SDM", new List<string> { "0-7 GB", "7-8 GB", ">=8 GB", "Missing Data" } },
-                { "SDM_IF_TR", new List<string> { "0-7 MB", "7-10 MB", ">=10 MB", "Missing Data" } },
-                { "SDM_IF_POS", new List<string> { "0-7 MB", "7-10 MB", ">=10 MB", "Missing Data" } },
-                { "SDM_Log_File", new List<string> { "0.0-0.5 GB", "0.5-1 GB", ">=1 GB", "Missing Data" } }
+                { "SDM", new List<string> { "0-7 GB", ">=8 GB", "Missing Data", "7-8 GB"  } },
+                { "SDM_IF_TR", new List<string> { "0-7 MB", ">=10 MB", "Missing Data", "7-10 MB" } },
+                { "SDM_IF_POS", new List<string> { "0-7 MB", ">=10 MB", "Missing Data", "7-10 MB" } },
+                { "SDM_Log_File", new List<string> { "0.0-0.5 GB", ">=1 GB", "Missing Data", "0.5-1 GB" } }
             };
         }
 
